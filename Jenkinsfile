@@ -12,31 +12,31 @@ pipeline {
         
         stage('Build & Test') {
             steps {
-                sh 'pytest'
+                bat 'pytest'
             }
         }
 
         stage('SonarQube Analysis') {
             steps {
-                sh 'sonar-scanner'
+                bat 'sonar-scanner'
             }
         }
 
         stage('Docker Build') {
             steps {
-                sh 'docker build -t -todo_app .'
+                bat 'docker build -t -todo_app .'
             }
         }
 
         stage('Docker Push') {
             steps {
-                sh 'docker push todo_app'
+                bat 'docker push todo_app'
             }
         }
 
         stage('Deploy Container') {
             steps {
-                sh 'docker run -d -p 5000:5000 todo_app'
+                bat 'docker run -d -p 5000:5000 todo_app'
             }
         }
     }
