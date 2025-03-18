@@ -12,7 +12,7 @@ pipeline {
         
         stage('Build & Test') {
             steps {
-                bat 'pytest'
+                bat 'C:\\Users\\LENOVO\\AppData\\Local\\Programs\\Python\\Python311\\Scripts\\pytest.exe'
             }
         }
 
