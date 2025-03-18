@@ -18,7 +18,7 @@ pipeline {
 
         stage('SonarQube Analysis') {
             steps {
-                bat 'sonar-scanner'
+                bbat 'sonar-scanner -Dsonar.login=squ_8cbb0c4e469f3f7e165b497d4a487b39eb7f8b46
             }
         }
 
