@@ -17,26 +17,31 @@ pipeline {
         }
 
         stage('SonarQube Analysis') {
-            steps {
-                bbat 'sonar-scanner -Dsonar.login=squ_8cbb0c4e469f3f7e165b497d4a487b39eb7f8b46'
-            }
-        }
+    steps {
+        bat '''
+        sonar-scanner -Dsonar.projectKey=devops1 \
+                      -Dsonar.host.url=http://localhost:9000 \
+                      -Dsonar.token=squ_8cbb0c4e469f3f7e165b497d4a487b39eb7f8b46
+        '''
+    }
+}
+
 
         stage('Docker Build') {
             steps {
-                bat 'docker build -t -todo_app .'
+                bat 'docker build -t prathibha22bcd36/todo_app .'
             }
         }
 
         stage('Docker Push') {
             steps {
-                bat 'docker push todo_app'
+                bat 'docker push prathibha22bcd36/todo_app'
             }
         }
 
         stage('Deploy Container') {
             steps {
-                bat 'docker run -d -p 5000:5000 todo_app'
+                bat 'docker run -d -p 5000:5000 prathibha22bcd36/todo_app'
             }
         }
     }
