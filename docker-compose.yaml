@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  web:
+    image: prathibha22bcd36/web-service:v1
+    ports:
+      - "8081:8081"
+    depends_on:
+      - db
+
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: todo_db
