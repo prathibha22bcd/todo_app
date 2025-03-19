@@ -1,16 +1,16 @@
 import os
-from dotenv import load_dotenv
 from flask import Flask, render_template, request, redirect, url_for, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf.csrf import CSRFProtect
 from datetime import datetime
+from dotenv import load_dotenv
 
-# Load environment variables from .env file
+# Load environment variables
 load_dotenv()
 
 app = Flask(__name__)
 
-# Secure Configuration
+# Use environment variables for security
 app.config["SECRET_KEY"] = os.getenv("FLASK_SECRET_KEY", "fallback_secret")
 app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL", "sqlite:///test.db")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
@@ -30,59 +30,66 @@ class Todo(db.Model):
 def index():
     if request.method == "POST":
         task_content = request.form.get("content", "").strip()
+
         if not task_content:
             flash("Task cannot be empty!", "danger")
             return redirect(url_for("index"))
-        
+
         new_task = Todo(content=task_content)
+
         try:
             db.session.add(new_task)
             db.session.commit()
             flash("Task added successfully!", "success")
         except Exception as e:
-            flash(f"Error adding task: {str(e)}", "danger")
             db.session.rollback()
-        
+            flash(f"Error adding task: {str(e)}", "danger")
+
         return redirect(url_for("index"))
-    
+
     tasks = Todo.query.order_by(Todo.pub_date.desc()).all()
     return render_template("index.html", tasks=tasks)
 
 # Delete Task
-@app.route("/delete/<int:id>", methods=["POST"])
+@app.route("/delete/<int:id>")
 def delete(id):
     task_to_delete = Todo.query.get_or_404(id)
+
     try:
         db.session.delete(task_to_delete)
         db.session.commit()
         flash("Task deleted successfully!", "success")
     except Exception as e:
-        flash(f"Error deleting task: {str(e)}", "danger")
         db.session.rollback()
-    
+        flash(f"Error deleting task: {str(e)}", "danger")
+
     return redirect(url_for("index"))
 
 # Update Task
 @app.route("/update/<int:id>", methods=["GET", "POST"])
 def update(id):
     task = Todo.query.get_or_404(id)
+
     if request.method == "POST":
-        task.content = request.form.get("content", "").strip()
-        if not task.content:
+        new_content = request.form.get("content", "").strip()
+
+        if not new_content:
             flash("Task cannot be empty!", "danger")
             return redirect(url_for("update", id=id))
+
+        task.content = new_content
         try:
             db.session.commit()
             flash("Task updated successfully!", "success")
         except Exception as e:
-            flash(f"Error updating task: {str(e)}", "danger")
             db.session.rollback()
-        
+            flash(f"Error updating task: {str(e)}", "danger")
+
         return redirect(url_for("index"))
-    
+
     return render_template("update.html", task=task)
 
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()
-    app.run(debug=os.getenv("FLASK_DEBUG", "False").lower() == "true")
+    app.run(debug=True)
