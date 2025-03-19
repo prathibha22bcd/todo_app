@@ -1,0 +1,7 @@
+# Ignore coverage reports
+coverage.xml
+.coverage
+.tox/
+.nox/
+.hypothesis/
+.pytest_cache/
