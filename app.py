@@ -1,66 +1,95 @@
-from flask import Flask, render_template, url_for, request, redirect
+import os
+from flask import Flask, render_template, request, redirect, url_for, flash
 from flask_sqlalchemy import SQLAlchemy
+from flask_wtf.csrf import CSRFProtect
 from datetime import datetime
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 app = Flask(__name__)
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///test.db"
+
+# Use environment variables for security
+app.config["SECRET_KEY"] = os.getenv("FLASK_SECRET_KEY", "fallback_secret")
+app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL", "sqlite:///test.db")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+csrf = CSRFProtect(app)
 db = SQLAlchemy(app)
 
-
+# Todo Model
 class Todo(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     content = db.Column(db.String(200), nullable=False)
     completed = db.Column(db.Integer, default=0)
     pub_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
-    def __repr__(self):
-        return "<Task %r>" % self.id
-
-
-@app.route("/", methods=["POST", "GET"])
+# Home Route
+@app.route("/", methods=["GET", "POST"])
 def index():
     if request.method == "POST":
-        task_content = request.form["task"]
+        task_content = request.form.get("content", "").strip()
+
+        if not task_content:
+            flash("Task cannot be empty!", "danger")
+            return redirect(url_for("index"))
+
         new_task = Todo(content=task_content)
+
         try:
             db.session.add(new_task)
             db.session.commit()
-            return redirect("/")
-        except:
-            return "There is an issue"
-    else:
-        tasks = Todo.query.order_by(Todo.pub_date).all()
-        return render_template("index.html", tasks=tasks)
+            flash("Task added successfully!", "success")
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Error adding task: {str(e)}", "danger")
 
+        return redirect(url_for("index"))
 
+    tasks = Todo.query.order_by(Todo.pub_date.desc()).all()
+    return render_template("index.html", tasks=tasks)
+
+# Delete Task
 @app.route("/delete/<int:id>")
 def delete(id):
-    task = Todo.query.get_or_404(id)
+    task_to_delete = Todo.query.get_or_404(id)
+
     try:
-        db.session.delete(task)
+        db.session.delete(task_to_delete)
         db.session.commit()
-        return redirect("/")
-    except:
-        return "This is an Problem while deleting"
+        flash("Task deleted successfully!", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Error deleting task: {str(e)}", "danger")
 
+    return redirect(url_for("index"))
 
-@app.route("/update/<int:id>", methods=["POST", "GET"])
+# Update Task
+@app.route("/update/<int:id>", methods=["GET", "POST"])
 def update(id):
     task = Todo.query.get_or_404(id)
-    if request.method == "POST":
-        task.content = request.form["task"]
 
+    if request.method == "POST":
+        new_content = request.form.get("content", "").strip()
+
+        if not new_content:
+            flash("Task cannot be empty!", "danger")
+            return redirect(url_for("update", id=id))
+
+        task.content = new_content
         try:
             db.session.commit()
-            return redirect("/")
-        except:
-            return "There is an issue"
-    else:
-        tasks = Todo.query.order_by(Todo.pub_date).all()
+            flash("Task updated successfully!", "success")
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Error updating task: {str(e)}", "danger")
 
-        return render_template("index.html", update_task=task, tasks=tasks)
+        return redirect(url_for("index"))
 
+    return render_template("update.html", task=task)
 
 if __name__ == "__main__":
+    with app.app_context():
+        db.create_all()
     app.run(debug=True)
