@@ -21,7 +21,7 @@ pipeline {
         bat '''
         sonar-scanner -Dsonar.projectKey=devops1 \
                       -Dsonar.host.url=http://localhost:9000 \
-                      -Dsonar.token=squ_8cbb0c4e469f3f7e165b497d4a487b39eb7f8b46
+                      -Dsonar.token=squ_a0d8d0a38ea2fbf5e4cb80a567b54d81bf09b36a
         '''
     }
 }
