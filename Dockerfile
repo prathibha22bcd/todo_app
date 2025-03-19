@@ -1,17 +1,20 @@
-# Use an official Python runtime as a parent image
-FROM python:3.9
+# Use an official lightweight Python image
+FROM python:3.9-slim  
 
-# Set the working directory in the container
-WORKDIR /app
+# Set the working directory inside the container
+WORKDIR /app  
 
-# Copy the current directory contents into the container at /app
-COPY . /app
+# Copy only necessary files first (to leverage Docker's layer caching)
+COPY requirements.txt .  
 
 # Install dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt  
 
-# Expose port 5000 (change if necessary)
-EXPOSE 5000
+# Copy the rest of the application code
+COPY . .  
 
-# Run the application
+# Expose the required port
+EXPOSE 5000  
+
+# Define the command to run the application
 CMD ["python", "app.py"]
